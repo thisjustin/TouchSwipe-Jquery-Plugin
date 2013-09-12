@@ -402,6 +402,12 @@
 		
 		//jQuery wrapped element for this instance
 		var $element = $(element);
+
+		/*	Dynamic element selector to bind to (for ajax content, etc)
+		*	Selector passed as dynamicElement will work similar to the dynamicElement in this
+		*	jQuery .on() example: $('selector').on('event', dynamicElement, handlerFunction);
+		*/
+		var dynamicElement = (options.dynamicElement === undefined) ? false : options.dynamicElement;
 		
 		//Current phase of th touch cycle
 		var phase = "start";
@@ -424,8 +430,14 @@
         
 		// Add gestures to all swipable areas if supported
 		try {
-			$element.bind(START_EV, touchStart);
-			$element.bind(CANCEL_EV, touchCancel);
+			if (dynamicElement) {
+				// use jQuery .on if configured with a dynamic element
+				$element.on(START_EV, dynamicElement, touchStart);
+				$element.on(CANCEL_EV, dynamicElement, touchCancel);
+			} else {
+				$element.bind(START_EV, touchStart);
+				$element.bind(CANCEL_EV, touchCancel);
+			}
 		}
 		catch (e) {
 			$.error('events not supported ' + START_EV + ',' + CANCEL_EV + ' on jQuery.swipe');
@@ -443,8 +455,14 @@
 		* @example $("#element").swipe("enable");
 		*/
 		this.enable = function () {
-			$element.bind(START_EV, touchStart);
-			$element.bind(CANCEL_EV, touchCancel);
+			if (dynamicElement) {
+				// use jQuery .on if configured with a dynamic element
+				$element.on(START_EV, dynamicElement, touchStart);
+				$element.on(CANCEL_EV, dynamicElement, touchCancel);
+			} else {
+				$element.bind(START_EV, touchStart);
+				$element.bind(CANCEL_EV, touchCancel);
+			}
 			return $element;
 		};
 
@@ -809,14 +827,27 @@
 		* @inner
 		*/
 		function removeListeners() {
-			$element.unbind(START_EV, touchStart);
-			$element.unbind(CANCEL_EV, touchCancel);
-			$element.unbind(MOVE_EV, touchMove);
-			$element.unbind(END_EV, touchEnd);
+			if(dynamicElement) {
+				// use jQuery .off if configured with a dynamic element
+				$element.off(START_EV, dynamicElement, touchStart);
+				$element.off(CANCEL_EV, dynamicElement, touchStart);
+				$element.off(MOVE_EV, dynamicElement, touchStart);
+				$element.off(END_EV, dynamicElement, touchStart);
+			} else {
+				$element.unbind(START_EV, touchStart);
+				$element.unbind(CANCEL_EV, touchCancel);
+				$element.unbind(MOVE_EV, touchMove);
+				$element.unbind(END_EV, touchEnd);
+			}
 			
 			//we only have leave events on desktop, we manually calculate leave on touch as its not supported in webkit
-			if(LEAVE_EV) { 
-				$element.unbind(LEAVE_EV, touchLeave);
+			if(LEAVE_EV) {
+				if(dynamicElement) {
+					// use jQuery .off if configured with a dynamic element
+					$element.off(LEAVE_EV, dynamicElement, touchLeave);
+				} else {
+					$element.unbind(LEAVE_EV, touchLeave);
+				}
 			}
 			
 			setTouchInProgress(false);
@@ -1506,20 +1537,42 @@
 			
 			//Add or remove event listeners depending on touch status
 			if(val===true) {
-				$element.bind(MOVE_EV, touchMove);
-				$element.bind(END_EV, touchEnd);
+				if(dynamicElement) {
+					// use jQuery .on if configured with a dynamic element
+					$element.on(MOVE_EV, dynamicElement, touchMove);
+					$element.on(END_EV, dynamicElement, touchEnd);
+				} else {
+					$element.bind(MOVE_EV, touchMove);
+					$element.bind(END_EV, touchEnd);
+				}
 				
 				//we only have leave events on desktop, we manually calcuate leave on touch as its not supported in webkit
 				if(LEAVE_EV) { 
-					$element.bind(LEAVE_EV, touchLeave);
+					if(dynamicElement) {
+						// use jQuery .on if configured with a dynamic element
+						$element.on(LEAVE_EV, dynamicElement, touchLeave);
+					} else {
+						$element.bind(LEAVE_EV, touchLeave);
+					}
 				}
 			} else {
-				$element.unbind(MOVE_EV, touchMove, false);
-				$element.unbind(END_EV, touchEnd, false);
+				if(dynamicElement) {
+					// use jQuery .off if configured with a dynamic element
+					$element.off(MOVE_EV, dynamicElement, touchMove);
+					$element.off(END_EV, dynamicElement, touchEnd);
+				} else {
+					$element.unbind(MOVE_EV, touchMove, false);
+					$element.unbind(END_EV, touchEnd, false);
+				}
 			
 				//we only have leave events on desktop, we manually calcuate leave on touch as its not supported in webkit
 				if(LEAVE_EV) { 
-					$element.unbind(LEAVE_EV, touchLeave, false);
+					if(dynamicElement) {
+						// use jQuery .off if configured with a dynamic element
+						$element.off(LEAVE_EV, dynamicElement, touchLeave);
+					} else {
+						$element.unbind(LEAVE_EV, touchLeave, false);
+					}
 				}
 			}
 			
